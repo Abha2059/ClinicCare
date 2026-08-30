@@ -2,6 +2,8 @@
 
 **Better Care. Better Health.**
 
+🌐 **Live demo:** [clinic-care-six.vercel.app](https://clinic-care-six.vercel.app)
+
 A complete full-stack healthcare appointment platform. Patients discover doctors and book
 appointments, doctors manage their availability and consultations, and administrators oversee
 the whole service.
