@@ -133,10 +133,13 @@ export const createAppointment = asyncHandler(async (req, res) => {
   await appointment.populate(POPULATE)
 
   // Let the patient know the request is in and awaiting the admin's review,
-  // and tell the clinic inbox a new request needs triage.
-  // Fire-and-forget: a mail problem must never fail a successful booking.
-  sendAppointmentEmail('submitted', appointment)
-  sendAppointmentEmail('adminNewRequest', appointment, process.env.EMAIL_USER)
+  // and tell the clinic inbox a new request needs triage. Awaited so the
+  // sends survive serverless hosts, which freeze once the response goes out;
+  // the mailer never rejects, so a mail problem cannot fail the booking.
+  await Promise.all([
+    sendAppointmentEmail('submitted', appointment),
+    sendAppointmentEmail('adminNewRequest', appointment, process.env.EMAIL_USER),
+  ])
 
   res.status(201).json({
     success: true,
@@ -293,8 +296,9 @@ export const updateAppointment = asyncHandler(async (req, res) => {
 
   // Tell the patient their visit is done. Guarded on the transition so an
   // admin re-saving an already-completed appointment does not resend it.
+  // Awaited for the same serverless reason as the booking emails.
   if (status === 'completed' && previousStatus !== 'completed') {
-    sendAppointmentEmail('completed', appointment)
+    await sendAppointmentEmail('completed', appointment)
   }
 
   res.json({

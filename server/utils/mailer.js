@@ -144,7 +144,10 @@ export function sendAppointmentEmail(kind, appointment, to = appointment?.patien
     return
   }
 
-  getTransporter()
+  // The returned promise lets callers await delivery — required on serverless
+  // hosts, which freeze as soon as the response goes out. It still never
+  // rejects, so awaiting it cannot fail a booking.
+  return getTransporter()
     .sendMail({ from: `"${BRAND}" <${process.env.EMAIL_USER}>`, to, subject, html })
     .then(() => console.log(`[mail] Sent "${kind}" email to ${to}`))
     .catch((err) => console.error(`[mail] Failed to send "${kind}" email to ${to}:`, err.message))

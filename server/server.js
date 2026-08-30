@@ -1,4 +1,6 @@
 import 'dotenv/config'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
@@ -17,6 +19,8 @@ import specialtyRoutes from './routes/specialtyRoutes.js'
 import reviewRoutes from './routes/reviewRoutes.js'
 import adminRoutes from './routes/adminRoutes.js'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
 const app = express()
 
 // Behind a proxy (Vercel, Render), trust the forwarded IP so rate limiting
@@ -24,7 +28,14 @@ const app = express()
 app.set('trust proxy', 1)
 
 // ---------- Security & parsing ----------
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    // The client's index.html carries a small inline script that applies the
+    // saved theme before first paint; the default CSP would block it.
+    contentSecurityPolicy: false,
+  }),
+)
 
 /**
  * CORS. In development any localhost origin is allowed so the Vite dev server
@@ -88,13 +99,26 @@ app.use('/api/specialties', specialtyRoutes)
 app.use('/api/reviews', reviewRoutes)
 app.use('/api/admin', adminRoutes)
 
-app.get('/', (_req, res) => {
-  res.json({
-    success: true,
-    message: 'ClinicCare API — Better Care. Better Health.',
-    docs: '/api/health',
+// ---------- Client (production) ----------
+// In production the built React app is served by this same process, so the
+// whole platform lives at one URL. API routes above always win; any other
+// GET falls through to the SPA, which handles routing client-side.
+if (process.env.NODE_ENV === 'production') {
+  const clientDist = path.resolve(__dirname, '../client/dist')
+  app.use(express.static(clientDist))
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' || req.path.startsWith('/api')) return next()
+    res.sendFile(path.join(clientDist, 'index.html'))
   })
-})
+} else {
+  app.get('/', (_req, res) => {
+    res.json({
+      success: true,
+      message: 'ClinicCare API — Better Care. Better Health.',
+      docs: '/api/health',
+    })
+  })
+}
 
 // ---------- Errors ----------
 app.use(notFound)
