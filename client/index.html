@@ -11,18 +11,17 @@
     />
     <title>ClinicCare — Better Care. Better Health.</title>
     <script>
-      // Applied before first paint so a dark-mode visitor never sees a white
-      // flash. Kept in sync with client/src/context/ThemeContext.jsx.
+      // Applied before first paint so a returning dark-mode user never sees a
+      // white flash. First-time visitors always start in light mode; dark is
+      // only applied when they have chosen it via the toggle.
+      // Kept in sync with client/src/context/ThemeContext.jsx.
       (function () {
         try {
-          var stored = localStorage.getItem('cliniccare_theme')
-          var isDark =
-            stored === 'dark' ||
-            (stored !== 'light' &&
-              window.matchMedia('(prefers-color-scheme: dark)').matches)
-          if (isDark) document.documentElement.classList.add('dark')
+          if (localStorage.getItem('cliniccare_theme') === 'dark') {
+            document.documentElement.classList.add('dark')
+          }
         } catch (e) {
-          /* storage blocked — fall back to the light default */
+          /* storage blocked — light default applies */
         }
       })()
     </script>

@@ -8,11 +8,13 @@ const STORAGE_KEY = 'cliniccare_theme'
 export const THEME_OPTIONS = ['light', 'dark', 'system']
 
 function readStoredTheme() {
+  // Light is the default for anyone without a saved choice; the OS preference
+  // is only honoured when a user explicitly selects 'system'.
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    return THEME_OPTIONS.includes(stored) ? stored : 'system'
+    return THEME_OPTIONS.includes(stored) ? stored : 'light'
   } catch {
-    return 'system'
+    return 'light'
   }
 }
 
