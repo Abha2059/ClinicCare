@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install --prefix server",
-  "buildCommand": "echo 'Using prebuilt client/dist committed to the repo'",
+  "buildCommand": "cd client && rm -f package-lock.json && npm install --no-audit --no-fund && npx vite build",
   "outputDirectory": "client/dist",
   "rewrites": [
     {
