@@ -101,25 +101,6 @@ export default function Login() {
         </button>
       </form>
 
-      <div className="mt-6 rounded-xl border border-ink-100 bg-ink-50/70 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">
-          Demo accounts
-        </p>
-        <ul className="mt-2 space-y-1 text-xs text-ink-600">
-          <li>
-            <span className="font-medium text-ink-800">Patient:</span> patient@cliniccare.com
-          </li>
-          <li>
-            <span className="font-medium text-ink-800">Doctor:</span> doctor@cliniccare.com
-          </li>
-          <li>
-            <span className="font-medium text-ink-800">Admin:</span> cliniccare26@gmail.com
-          </li>
-          <li className="pt-1 text-ink-500">
-            Password for all demo accounts: <span className="font-mono">Password123</span>
-          </li>
-        </ul>
-      </div>
     </AuthLayout>
   )
 }
