@@ -5,7 +5,7 @@
   "description": "ClinicCare — Better Care. Better Health. A full-stack healthcare appointment management platform.",
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": "22.x"
   },
   "scripts": {
     "install:all": "npm install --prefix client && npm install --prefix server",

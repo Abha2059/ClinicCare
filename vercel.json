@@ -1,9 +1,15 @@
 {
-  "installCommand": "npm run install:all",
-  "buildCommand": "npm run build",
+  "installCommand": "npm install --prefix server",
+  "buildCommand": "echo 'Using prebuilt client/dist committed to the repo'",
   "outputDirectory": "client/dist",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

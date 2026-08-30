@@ -44,3 +44,7 @@ Thumbs.db
 
 # Internal dev tooling
 client/scripts-check.mjs
+
+# The client build is committed so hosting can serve it without rebuilding.
+!client/dist/
+!client/dist/**

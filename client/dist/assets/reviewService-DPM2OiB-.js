@@ -1,0 +1,1 @@
+import{t as e}from"./api-CpKbJYVK.js";var t={listForDoctor:(t,n={})=>e.get(`/doctors/${t}/reviews`,{params:n}).then(e=>e.data),create:(t,n)=>e.post(`/doctors/${t}/reviews`,n).then(e=>e.data),remove:t=>e.delete(`/reviews/${t}`).then(e=>e.data),mine:()=>e.get(`/reviews/me`).then(e=>e.data)};export{t};
