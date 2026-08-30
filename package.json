@@ -2,7 +2,7 @@
   "name": "cliniccare",
   "version": "1.0.0",
   "private": true,
-  "description": "ClinicCare — Better Care. Better Health. A full-stack healthcare appointment management platform.",
+  "description": "ClinicCare \u2014 Better Care. Better Health. A full-stack healthcare appointment management platform.",
   "license": "MIT",
   "engines": {
     "node": "22.x"
@@ -20,5 +20,6 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
-  }
+  },
+  "type": "module"
 }
