@@ -27,7 +27,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Local database / runtime data
-data/
+/data/
 .mongo-data/
 *.mongo-data/
 *.pid
