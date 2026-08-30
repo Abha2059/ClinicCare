@@ -1,4 +1,4 @@
-import { STATUS_META } from '../../utils/constants'
+import { PAYMENT_STATUS_META, STATUS_META } from '../../utils/constants'
 import { cn } from '../../utils/helpers'
 
 const VARIANTS = {
@@ -22,5 +22,11 @@ export default function Badge({ variant = 'neutral', icon: Icon, className, chil
 /** Appointment status pill — single source of truth for status colours. */
 export function StatusBadge({ status, className }) {
   const meta = STATUS_META[status] || { label: status || 'Unknown', className: 'badge-neutral' }
+  return <span className={cn(meta.className, className)}>{meta.label}</span>
+}
+
+/** Payment state pill — paid online, due at the clinic, or refunded. */
+export function PaymentBadge({ status, className }) {
+  const meta = PAYMENT_STATUS_META[status] || PAYMENT_STATUS_META.pending
   return <span className={cn(meta.className, className)}>{meta.label}</span>
 }

@@ -135,7 +135,7 @@ export default function SpecialtyDetails() {
             </p>
             <ul className="mt-5 flex flex-wrap gap-2.5">
               {conditions.map((c) => (
-                <li key={c} className="rounded-full border border-ink-200 bg-white px-4 py-2 text-sm font-medium text-ink-700">
+                <li key={c} className="rounded-full border border-ink-200 bg-surface-raised px-4 py-2 text-sm font-medium text-ink-700">
                   {c}
                 </li>
               ))}

@@ -184,6 +184,7 @@ export const updateMyDoctorProfile = asyncHandler(async (req, res) => {
   const editable = [
     'specialty',
     'qualification',
+    'location',
     'experience',
     'languages',
     'bio',
@@ -279,6 +280,7 @@ export const createDoctor = asyncHandler(async (req, res) => {
     password,
     specialty,
     qualification,
+    location,
     experience,
     consultationFee,
     languages,
@@ -306,6 +308,7 @@ export const createDoctor = asyncHandler(async (req, res) => {
       user: user._id,
       specialty,
       qualification,
+      location,
       experience,
       consultationFee,
       languages,
@@ -335,6 +338,7 @@ export const updateDoctor = asyncHandler(async (req, res) => {
   const editable = [
     'specialty',
     'qualification',
+    'location',
     'experience',
     'languages',
     'bio',

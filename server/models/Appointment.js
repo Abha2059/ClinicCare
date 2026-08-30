@@ -11,6 +11,17 @@ export const APPOINTMENT_STATUSES = [
 /** Statuses that still occupy the doctor's slot. */
 export const BLOCKING_STATUSES = ['pending', 'confirmed', 'completed']
 
+/** How the patient settles the consultation fee. */
+export const PAYMENT_METHODS = ['pay-at-clinic', 'upi']
+
+/**
+ * Payment lifecycle.
+ * 'pending'  — pay-at-clinic, or an online attempt not yet completed
+ * 'paid'     — settled online before the visit
+ * 'refunded' — money returned after a cancellation
+ */
+export const PAYMENT_STATUSES = ['pending', 'paid', 'refunded']
+
 const appointmentSchema = new mongoose.Schema(
   {
     patient: {
@@ -68,6 +79,31 @@ const appointmentSchema = new mongoose.Schema(
     consultationFee: {
       type: Number,
       min: 0,
+    },
+    paymentMethod: {
+      type: String,
+      enum: { values: PAYMENT_METHODS, message: 'Invalid payment method' },
+      default: 'pay-at-clinic',
+    },
+    paymentStatus: {
+      type: String,
+      enum: { values: PAYMENT_STATUSES, message: 'Invalid payment status' },
+      default: 'pending',
+      index: true,
+    },
+    /**
+     * Reference shown to the patient and quoted at the clinic desk.
+     * This deployment simulates the UPI settlement rather than calling a
+     * gateway, so the reference is generated here instead of by a provider.
+     */
+    paymentReference: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    /** When the fee was marked settled. */
+    paidAt: {
+      type: Date,
     },
     status: {
       type: String,

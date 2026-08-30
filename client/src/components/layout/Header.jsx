@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react'
 import Logo from './Logo'
+import ThemeToggle from '../common/ThemeToggle'
 import Avatar from '../common/Avatar'
 import { useAuth } from '../../context/AuthContext'
 import { ROLES } from '../../utils/constants'
@@ -100,7 +101,7 @@ export default function Header() {
     )
 
   return (
-    <header className="sticky top-0 z-50 border-b border-ink-100 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
+    <header className="sticky top-0 z-50 border-b border-ink-100 bg-surface/90 backdrop-blur supports-[backdrop-filter]:bg-surface/75">
       <a
         href="#main-content"
         className="sr-only-focusable absolute left-4 top-3 z-50 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white"
@@ -181,7 +182,7 @@ export default function Header() {
                 {menuOpen && (
                   <div
                     role="menu"
-                    className="absolute right-0 mt-2 w-60 animate-fade-up overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-pop"
+                    className="absolute right-0 mt-2 w-60 animate-fade-up overflow-hidden rounded-2xl border border-ink-100 bg-surface-raised shadow-pop"
                   >
                     <div className="border-b border-ink-100 px-4 py-3">
                       <p className="truncate text-sm font-semibold text-ink-900">{user?.name}</p>
@@ -239,6 +240,9 @@ export default function Header() {
               </div>
             )}
 
+            {/* Sits outside the auth block so it shows signed in or out. */}
+            <ThemeToggle />
+
             {/* Mobile menu toggle */}
             <button
               type="button"
@@ -285,7 +289,7 @@ export default function Header() {
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
-          <div className="absolute right-0 top-0 flex h-full w-[86%] max-w-sm animate-slide-in-right flex-col bg-white shadow-pop">
+          <div className="absolute right-0 top-0 flex h-full w-[86%] max-w-sm animate-slide-in-right flex-col bg-surface shadow-pop">
             <div className="flex items-center justify-between border-b border-ink-100 px-4 py-4">
               <Logo />
               <button

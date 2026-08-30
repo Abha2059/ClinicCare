@@ -42,7 +42,7 @@ export default function FAQ() {
           ))}
 
           <section className="rounded-2xl border border-brand-100 bg-brand-50/60 p-6 text-center">
-            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-surface-raised shadow-sm">
               <MessageSquare className="h-6 w-6 text-brand-600" aria-hidden="true" />
             </span>
             <h2 className="mt-4 text-lg font-semibold text-ink-900">Still need help?</h2>

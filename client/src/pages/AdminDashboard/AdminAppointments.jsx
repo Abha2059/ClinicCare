@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarDays, Search } from 'lucide-react'
+import { CalendarDays, Check, Search, X } from 'lucide-react'
 
 import PageHeader from '../../components/dashboard/PageHeader'
 import Avatar from '../../components/common/Avatar'
@@ -9,8 +9,10 @@ import Pagination from '../../components/common/Pagination'
 import { EmptyState, ErrorState, TableSkeleton } from '../../components/common/States'
 import useDebounce from '../../hooks/useDebounce'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { useToast } from '../../context/AppContext'
 import adminService from '../../services/adminService'
-import { APPOINTMENT_STATUS } from '../../utils/constants'
+import appointmentService from '../../services/appointmentService'
+import { APPOINTMENT_STATUS, STATUS_META } from '../../utils/constants'
 import { formatCurrency, formatDate, formatTime, getErrorMessage } from '../../utils/helpers'
 
 const PAGE_LIMIT = 12
@@ -24,12 +26,109 @@ const STATUS_OPTIONS = [
   { value: APPOINTMENT_STATUS.REJECTED, label: 'Rejected' },
 ]
 
+/** Statuses an admin can assign from the table. */
+const ASSIGNABLE = [
+  APPOINTMENT_STATUS.PENDING,
+  APPOINTMENT_STATUS.CONFIRMED,
+  APPOINTMENT_STATUS.COMPLETED,
+  APPOINTMENT_STATUS.CANCELLED,
+  APPOINTMENT_STATUS.REJECTED,
+]
+
+/** Reason recorded when an admin closes an appointment from the table. */
+function reasonFor(next) {
+  if (next === APPOINTMENT_STATUS.CANCELLED) return 'Cancelled by the clinic'
+  if (next === APPOINTMENT_STATUS.REJECTED) return 'Declined by the clinic'
+  return undefined
+}
+
+/**
+ * Inline status control for one row. Shows the badge alongside a select so the
+ * current state stays readable while still being editable.
+ */
+function StatusChanger({ appointment, onChanged, busy, onBusy }) {
+  const toast = useToast()
+
+  const change = async (next) => {
+    if (next === appointment.status) return
+    onBusy(appointment._id)
+    try {
+      const reason = reasonFor(next)
+      await appointmentService.updateStatus(
+        appointment._id,
+        next,
+        reason ? { cancellationReason: reason } : {},
+      )
+      toast.success(`Appointment marked ${STATUS_META[next]?.label.toLowerCase() || next}.`)
+      await onChanged()
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'The status could not be changed.'))
+    } finally {
+      onBusy(null)
+    }
+  }
+
+  // An incoming booking gets explicit accept/reject actions rather than a
+  // dropdown, so triaging new requests is one click instead of two.
+  if (appointment.status === APPOINTMENT_STATUS.PENDING) {
+    return (
+      <div className="flex items-center gap-2">
+        <StatusBadge status={appointment.status} />
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => change(APPOINTMENT_STATUS.CONFIRMED)}
+          className="btn-primary btn-sm"
+          title={`Accept ${appointment.patient?.name || 'this'} booking`}
+        >
+          <Check className="h-3.5 w-3.5" aria-hidden="true" />
+          Accept
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => change(APPOINTMENT_STATUS.REJECTED)}
+          className="btn-danger btn-sm"
+          title={`Reject ${appointment.patient?.name || 'this'} booking`}
+        >
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
+          Reject
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <StatusBadge status={appointment.status} />
+      <label className="sr-only" htmlFor={`status-${appointment._id}`}>
+        Change status for {appointment.patient?.name || 'this appointment'}
+      </label>
+      <select
+        id={`status-${appointment._id}`}
+        value={appointment.status}
+        disabled={busy}
+        onChange={(e) => change(e.target.value)}
+        className="select h-8 w-auto min-w-[7.5rem] py-0 pl-2.5 pr-7 text-xs disabled:opacity-50"
+      >
+        {ASSIGNABLE.map((s) => (
+          <option key={s} value={s}>
+            {STATUS_META[s]?.label || s}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
 export default function AdminAppointments() {
   useDocumentTitle('All appointments')
 
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
+  // Id of the row currently saving, so only that select is disabled.
+  const [updatingId, setUpdatingId] = useState(null)
 
   const [result, setResult] = useState({ appointments: [], total: 0, totalPages: 0 })
   const [loading, setLoading] = useState(true)
@@ -179,7 +278,12 @@ export default function AdminAppointments() {
                       {formatCurrency(a.consultationFee ?? a.doctor?.consultationFee)}
                     </td>
                     <td>
-                      <StatusBadge status={a.status} />
+                      <StatusChanger
+                        appointment={a}
+                        onChanged={load}
+                        busy={updatingId === a._id}
+                        onBusy={setUpdatingId}
+                      />
                     </td>
                     <td>
                       <div className="flex justify-end">

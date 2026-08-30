@@ -17,7 +17,7 @@ export default function Accordion({ items = [], allowMultiple = false, className
   }
 
   return (
-    <div className={cn('divide-y divide-ink-100 overflow-hidden rounded-2xl border border-ink-100 bg-white', className)}>
+    <div className={cn('divide-y divide-ink-100 overflow-hidden rounded-2xl border border-ink-100 bg-surface-raised', className)}>
       {items.map((item, i) => {
         const isOpen = open.has(i)
         const btnId = `${baseId}-btn-${i}`

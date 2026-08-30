@@ -93,7 +93,7 @@ export default function Modal({
         aria-describedby={description ? 'modal-desc' : undefined}
         tabIndex={-1}
         className={cn(
-          'relative w-full animate-fade-up rounded-t-3xl bg-white shadow-pop sm:rounded-2xl',
+          'relative w-full animate-fade-up rounded-t-3xl bg-surface-raised shadow-pop sm:rounded-2xl',
           'max-h-[92vh] overflow-y-auto',
           SIZES[size],
         )}

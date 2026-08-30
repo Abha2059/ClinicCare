@@ -113,7 +113,7 @@ export default function Login() {
             <span className="font-medium text-ink-800">Doctor:</span> doctor@cliniccare.com
           </li>
           <li>
-            <span className="font-medium text-ink-800">Admin:</span> admin@cliniccare.com
+            <span className="font-medium text-ink-800">Admin:</span> cliniccare26@gmail.com
           </li>
           <li className="pt-1 text-ink-500">
             Password for all demo accounts: <span className="font-mono">Password123</span>

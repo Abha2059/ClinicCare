@@ -29,8 +29,8 @@ export default function Stepper({ steps = [], current = 0, onStepClick, classNam
                   className={cn(
                     'flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition',
                     isComplete && 'border-brand-600 bg-brand-600 text-white',
-                    isCurrent && 'border-brand-600 bg-white text-brand-700 ring-4 ring-brand-100',
-                    !isComplete && !isCurrent && 'border-ink-200 bg-white text-ink-400',
+                    isCurrent && 'border-brand-600 bg-surface-raised text-brand-700 ring-4 ring-brand-100',
+                    !isComplete && !isCurrent && 'border-ink-200 bg-surface-raised text-ink-400',
                     clickable && 'cursor-pointer hover:brightness-110',
                   )}
                 >

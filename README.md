@@ -273,7 +273,7 @@ All demo accounts use the password **`Password123`**.
 | ------- | ------------------------- |
 | Patient | `patient@cliniccare.com`  |
 | Doctor  | `doctor@cliniccare.com`   |
-| Admin   | `admin@cliniccare.com`    |
+| Admin   | `cliniccare26@gmail.com`    |
 
 New sign-ups are always created as patients — roles cannot be self-assigned.
 

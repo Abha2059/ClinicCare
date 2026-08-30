@@ -24,9 +24,10 @@ export default function Avatar({ src, name = '', size = 'md', className, ring = 
       loading="lazy"
       onError={() => setFailed(true)}
       className={cn(
-        'shrink-0 object-cover',
+        // A hairline keeps a light-background portrait from bleeding into the card.
+        'shrink-0 bg-ink-100 object-cover ring-1 ring-ink-900/5 dark:ring-ink-50/10',
         SIZES[size],
-        ring && 'ring-2 ring-white',
+        ring && 'ring-2 ring-surface',
         className,
       )}
     />
@@ -37,7 +38,7 @@ export default function Avatar({ src, name = '', size = 'md', className, ring = 
         'inline-flex shrink-0 items-center justify-center font-semibold',
         SIZES[size],
         avatarColor(name),
-        ring && 'ring-2 ring-white',
+        ring && 'ring-2 ring-surface',
         className,
       )}
     >

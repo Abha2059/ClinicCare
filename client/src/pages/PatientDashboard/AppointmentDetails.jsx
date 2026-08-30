@@ -2,14 +2,19 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
+  Ban,
+  Building2,
   CalendarDays,
   Check,
+  CheckCheck,
   ClipboardList,
   Clock,
   Mail,
   MapPin,
   MessageSquare,
   Phone,
+  RotateCcw,
+  Smartphone,
   Stethoscope,
   UserRound,
   Video,
@@ -19,7 +24,7 @@ import {
 
 import PageHeader from '../../components/dashboard/PageHeader'
 import Avatar from '../../components/common/Avatar'
-import { StatusBadge } from '../../components/common/Badge'
+import { PaymentBadge, StatusBadge } from '../../components/common/Badge'
 import { ConfirmModal } from '../../components/common/Modal'
 import Rating, { RatingInput } from '../../components/common/Rating'
 import { ErrorState, LoadingState } from '../../components/common/States'
@@ -29,7 +34,74 @@ import useDocumentTitle from '../../hooks/useDocumentTitle'
 import appointmentService from '../../services/appointmentService'
 import reviewService from '../../services/reviewService'
 import { APPOINTMENT_STATUS, ROLES } from '../../utils/constants'
-import { formatCurrency, formatDate, formatTime, getErrorMessage, isPastSlot } from '../../utils/helpers'
+import { cn, formatCurrency, formatDate, formatTime, getErrorMessage, isPastSlot } from '../../utils/helpers'
+
+/**
+ * Every status an admin can move an appointment to, with the confirmation copy
+ * for each. The server allows admins any transition, so this is the full set;
+ * the current status is filtered out at render time.
+ */
+const ADMIN_STATUS_ACTIONS = [
+  {
+    status: APPOINTMENT_STATUS.PENDING,
+    label: 'Set back to pending',
+    icon: RotateCcw,
+    buttonClass: 'btn-outline',
+    title: 'Move this appointment back to pending?',
+    message: 'The doctor will need to accept or reject the request again.',
+    confirmLabel: 'Set to pending',
+    variant: 'primary',
+    successMessage: 'Appointment set back to pending.',
+  },
+  {
+    status: APPOINTMENT_STATUS.CONFIRMED,
+    label: 'Confirm appointment',
+    icon: Check,
+    buttonClass: 'btn-primary',
+    title: 'Confirm this appointment?',
+    message: 'The patient and doctor will both see this visit as confirmed.',
+    confirmLabel: 'Confirm appointment',
+    variant: 'primary',
+    successMessage: 'Appointment confirmed.',
+  },
+  {
+    status: APPOINTMENT_STATUS.COMPLETED,
+    label: 'Mark as completed',
+    icon: CheckCheck,
+    buttonClass: 'btn-outline',
+    title: 'Mark this appointment as completed?',
+    message: 'This records the consultation as finished and lets the patient leave a review.',
+    confirmLabel: 'Mark completed',
+    variant: 'primary',
+    successMessage: 'Appointment marked completed.',
+  },
+  {
+    status: APPOINTMENT_STATUS.CANCELLED,
+    label: 'Cancel appointment',
+    icon: X,
+    buttonClass: 'btn-outline text-red-600',
+    buildExtra: () => ({ cancellationReason: 'Cancelled by the clinic' }),
+    title: 'Cancel this appointment?',
+    message:
+      'The slot is released and the patient will see this visit as cancelled. A prepaid fee is marked for refund.',
+    confirmLabel: 'Cancel appointment',
+    variant: 'danger',
+    successMessage: 'Appointment cancelled.',
+  },
+  {
+    status: APPOINTMENT_STATUS.REJECTED,
+    label: 'Reject appointment',
+    icon: Ban,
+    buttonClass: 'btn-outline text-red-600',
+    buildExtra: () => ({ cancellationReason: 'Declined by the clinic' }),
+    title: 'Reject this appointment?',
+    message:
+      'The slot is released and the patient will see this request as declined. A prepaid fee is marked for refund.',
+    confirmLabel: 'Reject appointment',
+    variant: 'danger',
+    successMessage: 'Appointment rejected.',
+  },
+]
 
 export default function AppointmentDetails() {
   const { id } = useParams()
@@ -130,6 +202,7 @@ export default function AppointmentDetails() {
   const doctorUser = appointment.doctor?.user
   const patientUser = appointment.patient
   const isOnline = appointment.appointmentType === 'online'
+  const isPaidOnline = appointment.paymentMethod === 'upi'
   const reference = `CC-${String(appointment._id).slice(-8).toUpperCase()}`
   const dateKey = String(appointment.appointmentDate).slice(0, 10)
   const isPast = isPastSlot(dateKey, appointment.appointmentTime)
@@ -215,6 +288,25 @@ export default function AppointmentDetails() {
                   <dd className="text-sm font-medium text-ink-900">
                     {formatCurrency(appointment.consultationFee ?? appointment.doctor?.consultationFee)}
                   </dd>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                {isPaidOnline ? (
+                  <Smartphone className="mt-0.5 h-4.5 w-4.5 shrink-0 text-ink-400" aria-hidden="true" />
+                ) : (
+                  <Building2 className="mt-0.5 h-4.5 w-4.5 shrink-0 text-ink-400" aria-hidden="true" />
+                )}
+                <div className="min-w-0">
+                  <dt className="text-xs text-ink-500">Payment</dt>
+                  <dd className="flex flex-wrap items-center gap-2 text-sm font-medium text-ink-900">
+                    {isPaidOnline ? 'Online via UPI' : 'At the clinic'}
+                    <PaymentBadge status={appointment.paymentStatus} />
+                  </dd>
+                  {appointment.paymentReference && (
+                    <dd className="mt-0.5 font-mono text-xs text-ink-500">
+                      {appointment.paymentReference}
+                    </dd>
+                  )}
                 </div>
               </div>
             </dl>
@@ -360,6 +452,35 @@ export default function AppointmentDetails() {
                   </div>
                 )}
               </dl>
+            </section>
+          )}
+
+          {/* Admin status override — admins may set any status at any time. */}
+          {isAdmin && (
+            <section className="card card-body">
+              <h2 className="text-sm font-semibold text-ink-900">Change status</h2>
+              <p className="mt-1 text-xs text-ink-500">
+                Currently <StatusBadge status={appointment.status} className="align-middle" />
+              </p>
+
+              <div className="mt-3 space-y-2">
+                {ADMIN_STATUS_ACTIONS.filter((a) => a.status !== appointment.status).map((a) => (
+                  <button
+                    key={a.status}
+                    type="button"
+                    onClick={() => setAction({ ...a, extra: a.buildExtra?.() })}
+                    className={cn('w-full', a.buttonClass)}
+                  >
+                    <a.icon className="h-4 w-4" aria-hidden="true" />
+                    {a.label}
+                  </button>
+                ))}
+              </div>
+
+              <p className="mt-3 text-xs text-ink-400">
+                Changing to cancelled or rejected frees the doctor&rsquo;s slot. A prepaid
+                consultation is marked for refund automatically.
+              </p>
             </section>
           )}
 

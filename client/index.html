@@ -10,6 +10,22 @@
       content="ClinicCare — Better Care. Better Health. Find trusted doctors, browse specialties and book clinic appointments online."
     />
     <title>ClinicCare — Better Care. Better Health.</title>
+    <script>
+      // Applied before first paint so a dark-mode visitor never sees a white
+      // flash. Kept in sync with client/src/context/ThemeContext.jsx.
+      (function () {
+        try {
+          var stored = localStorage.getItem('cliniccare_theme')
+          var isDark =
+            stored === 'dark' ||
+            (stored !== 'light' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (isDark) document.documentElement.classList.add('dark')
+        } catch (e) {
+          /* storage blocked — fall back to the light default */
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -12,6 +12,7 @@ import { useApp, useToast } from '../../context/AppContext'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
 import doctorService from '../../services/doctorService'
 import authService from '../../services/authService'
+import { CLINIC_LOCATIONS } from '../../data/locations'
 import { LANGUAGE_OPTIONS } from '../../utils/constants'
 import { getErrorMessage } from '../../utils/helpers'
 import { rules } from '../../utils/validators'
@@ -53,6 +54,7 @@ export default function DoctorProfileEdit() {
         profileImage: user?.profileImage || '',
         specialty: d?.specialty?._id || '',
         qualification: d?.qualification || '',
+        location: d?.location || '',
         experience: d?.experience ?? 0,
         consultationFee: d?.consultationFee ?? 500,
         bio: d?.bio || '',
@@ -97,6 +99,7 @@ export default function DoctorProfileEdit() {
         doctorService.updateMe({
           specialty: values.specialty,
           qualification: values.qualification.trim(),
+          location: values.location,
           experience: Number(values.experience),
           consultationFee: Number(values.consultationFee),
           bio: values.bio.trim(),
@@ -183,6 +186,16 @@ export default function DoctorProfileEdit() {
               {...register('qualification', rules.required('Qualification'))}
             />
 
+            {/* Picked from the published branch list so profiles and the
+                homepage locations section never drift apart. */}
+            <Select
+              label="Clinic location"
+              placeholder="Select the branch you consult from"
+              options={CLINIC_LOCATIONS.map((l) => ({ value: l.name, label: `${l.name} — ${l.state}` }))}
+              error={errors.location?.message}
+              {...register('location')}
+            />
+
             <div className="grid gap-4 sm:grid-cols-2">
               <Input
                 label="Years of experience"
@@ -239,7 +252,7 @@ export default function DoctorProfileEdit() {
                     className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
                       selected
                         ? 'border-brand-600 bg-brand-600 text-white'
-                        : 'border-ink-200 bg-white text-ink-700 hover:border-brand-300 hover:bg-brand-50'
+                        : 'border-ink-200 bg-surface-raised text-ink-700 hover:border-brand-300 hover:bg-brand-50'
                     }`}
                   >
                     {lang}

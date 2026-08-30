@@ -6,6 +6,7 @@ import {
   CalendarDays,
   GraduationCap,
   Languages,
+  MapPin,
   MessageSquare,
   Sparkles,
   Stethoscope,
@@ -167,6 +168,12 @@ export default function DoctorDetails() {
                     <Wallet className="h-4 w-4 text-ink-400" aria-hidden="true" />
                     {formatCurrency(doctor.consultationFee)} consultation
                   </span>
+                  {doctor.location && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <MapPin className="h-4 w-4 text-ink-400" aria-hidden="true" />
+                      {doctor.location}
+                    </span>
+                  )}
                 </div>
 
                 <div className="mt-3 flex justify-center sm:justify-start">

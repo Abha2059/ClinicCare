@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
+  Building2,
   CalendarDays,
   CheckCircle2,
   Clock,
   LayoutDashboard,
   MapPin,
+  Smartphone,
   Stethoscope,
   UserRound,
   Video,
 } from 'lucide-react'
 
 import Avatar from '../../components/common/Avatar'
-import { StatusBadge } from '../../components/common/Badge'
+import { PaymentBadge, StatusBadge } from '../../components/common/Badge'
 import { ErrorState, LoadingState } from '../../components/common/States'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
 import appointmentService from '../../services/appointmentService'
@@ -67,6 +69,7 @@ export default function BookingSuccess() {
   const doctorName = appointment.doctor?.user?.name || 'Doctor'
   const specialtyName = appointment.specialty?.name || appointment.doctor?.specialty?.name || 'Consultation'
   const isOnline = appointment.appointmentType === 'online'
+  const isPaidOnline = appointment.paymentMethod === 'upi'
   // Short, human-friendly reference derived from the record id.
   const reference = `CC-${String(appointment._id).slice(-8).toUpperCase()}`
 
@@ -153,15 +156,44 @@ export default function BookingSuccess() {
               </div>
             )}
 
-            <div className="mt-5 flex items-center justify-between border-t border-ink-100 pt-4">
-              <span className="inline-flex items-center gap-2 text-sm text-ink-500">
-                <Stethoscope className="h-4 w-4" aria-hidden="true" />
-                Consultation fee
-              </span>
-              <span className="text-lg font-bold text-ink-900">
-                {formatCurrency(appointment.consultationFee ?? appointment.doctor?.consultationFee)}
-              </span>
+            <div className="mt-5 border-t border-ink-100 pt-4">
+              <div className="flex items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2 text-sm text-ink-500">
+                  <Stethoscope className="h-4 w-4" aria-hidden="true" />
+                  Consultation fee
+                </span>
+                <span className="text-lg font-bold text-ink-900">
+                  {formatCurrency(appointment.consultationFee ?? appointment.doctor?.consultationFee)}
+                </span>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-2 text-sm text-ink-500">
+                  {isPaidOnline ? (
+                    <Smartphone className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Building2 className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {isPaidOnline ? 'Paid online via UPI' : 'Pay at the clinic'}
+                </span>
+                <PaymentBadge status={appointment.paymentStatus} />
+              </div>
+
+              {appointment.paymentReference && (
+                <p className="mt-2 text-xs text-ink-500">
+                  Payment reference{' '}
+                  <span className="font-mono font-medium text-ink-700">
+                    {appointment.paymentReference}
+                  </span>
+                </p>
+              )}
             </div>
+
+            {!isPaidOnline && (
+              <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Please carry the fee to your visit — the reception desk accepts cash, card and UPI.
+              </p>
+            )}
           </div>
         </div>
 

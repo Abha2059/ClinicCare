@@ -28,7 +28,7 @@ export default function ToastContainer() {
           <div
             key={t.id}
             role={t.type === 'error' ? 'alert' : 'status'}
-            className="pointer-events-auto flex w-full max-w-sm animate-slide-in-right overflow-hidden rounded-xl border border-ink-100 bg-white shadow-pop"
+            className="pointer-events-auto flex w-full max-w-sm animate-slide-in-right overflow-hidden rounded-xl border border-ink-100 bg-surface-raised shadow-pop"
           >
             <span className={cn('w-1 shrink-0', meta.bar)} aria-hidden="true" />
             <div className="flex flex-1 items-start gap-3 p-3.5">

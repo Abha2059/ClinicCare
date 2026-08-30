@@ -101,7 +101,7 @@ async function seed() {
   // ---------- Admin ----------
   const admin = await User.create({
     name: 'ClinicCare Admin',
-    email: 'admin@cliniccare.com',
+    email: 'cliniccare26@gmail.com',
     phone: '9700000001',
     password: DEMO_PASSWORD,
     role: 'admin',
@@ -123,6 +123,7 @@ async function seed() {
       phone: entry.phone,
       password: DEMO_PASSWORD,
       role: 'doctor',
+      profileImage: entry.profileImage || '',
     })
 
     // Vary the working week a little so availability is not uniform.
@@ -141,6 +142,7 @@ async function seed() {
       user: user._id,
       specialty: specialty._id,
       qualification: entry.qualification,
+      location: entry.location,
       experience: entry.experience,
       consultationFee: entry.consultationFee,
       languages: entry.languages,

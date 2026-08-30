@@ -1,9 +1,11 @@
+import crypto from 'crypto'
 import mongoose from 'mongoose'
 import Appointment, { BLOCKING_STATUSES } from '../models/Appointment.js'
 import Doctor from '../models/Doctor.js'
 import Review from '../models/Review.js'
 import ApiError from '../utils/ApiError.js'
 import asyncHandler from '../utils/asyncHandler.js'
+import { sendAppointmentEmail } from '../utils/mailer.js'
 import {
   isPastSlot,
   isValidDateKey,
@@ -46,6 +48,7 @@ export const createAppointment = asyncHandler(async (req, res) => {
     reason,
     symptoms,
     patientPhone,
+    paymentMethod,
   } = req.body
 
   if (!mongoose.isValidObjectId(doctorId)) {
@@ -104,6 +107,11 @@ export const createAppointment = asyncHandler(async (req, res) => {
     throw ApiError.conflict('You already have another appointment at that time')
   }
 
+  // 6. Payment. The client states how it wants to pay; whether that counts as
+  //    settled is decided here, never taken from the request body.
+  const method = paymentMethod === 'upi' ? 'upi' : 'pay-at-clinic'
+  const isPrepaid = method === 'upi'
+
   const appointment = await Appointment.create({
     patient: req.user._id,
     doctor: doctorId,
@@ -116,9 +124,19 @@ export const createAppointment = asyncHandler(async (req, res) => {
     patientPhone: patientPhone || req.user.phone,
     consultationFee: doctor.consultationFee,
     status: 'pending',
+    paymentMethod: method,
+    paymentStatus: isPrepaid ? 'paid' : 'pending',
+    paymentReference: isPrepaid ? buildPaymentReference() : '',
+    paidAt: isPrepaid ? new Date() : undefined,
   })
 
   await appointment.populate(POPULATE)
+
+  // Let the patient know the request is in and awaiting the admin's review,
+  // and tell the clinic inbox a new request needs triage.
+  // Fire-and-forget: a mail problem must never fail a successful booking.
+  sendAppointmentEmail('submitted', appointment)
+  sendAppointmentEmail('adminNewRequest', appointment, process.env.EMAIL_USER)
 
   res.status(201).json({
     success: true,
@@ -203,12 +221,13 @@ export const updateAppointment = asyncHandler(async (req, res) => {
 
   if (!status) throw ApiError.badRequest('A new status is required')
 
-  // Completed, cancelled and rejected are terminal.
-  if (['completed', 'cancelled', 'rejected'].includes(appointment.status)) {
+  const role = req.user.role
+
+  // Completed, cancelled and rejected are terminal — except for an admin, who
+  // administers the platform and may correct a status that was set in error.
+  if (role !== 'admin' && ['completed', 'cancelled', 'rejected'].includes(appointment.status)) {
     throw ApiError.badRequest(`This appointment is already ${appointment.status}`)
   }
-
-  const role = req.user.role
 
   if (role === 'patient') {
     // A patient may only call off their own visit.
@@ -228,14 +247,55 @@ export const updateAppointment = asyncHandler(async (req, res) => {
   }
   // Admins may set any status.
 
+  /**
+   * Reopening a closed appointment puts it back into the doctor's diary, and
+   * the slot may have been given away in the meantime. The unique index only
+   * covers active statuses, so this check is what stops a double booking.
+   */
+  const previousStatus = appointment.status
+  const wasClosed = ['cancelled', 'rejected'].includes(appointment.status)
+  const isReopening = BLOCKING_STATUSES.includes(status)
+  if (wasClosed && isReopening) {
+    const clash = await Appointment.findOne({
+      _id: { $ne: appointment._id },
+      doctor: appointment.doctor,
+      appointmentDate: appointment.appointmentDate,
+      appointmentTime: appointment.appointmentTime,
+      status: { $in: BLOCKING_STATUSES },
+    })
+    if (clash) {
+      throw ApiError.conflict(
+        'That slot has since been booked by someone else, so this appointment cannot be reopened.',
+      )
+    }
+  }
+
   appointment.status = status
   if (status === 'cancelled' || status === 'rejected') {
     appointment.cancellationReason =
       cancellationReason || (status === 'rejected' ? 'Declined by the doctor' : 'Cancelled')
+
+    // A visit that was paid for online and then called off is owed a refund.
+    if (appointment.paymentStatus === 'paid') {
+      appointment.paymentStatus = 'refunded'
+    }
+  } else if (wasClosed) {
+    // Back in the diary: the old cancellation note no longer applies, and a
+    // refunded prepayment counts as settled again.
+    appointment.cancellationReason = ''
+    if (appointment.paymentStatus === 'refunded' && appointment.paymentMethod === 'upi') {
+      appointment.paymentStatus = 'paid'
+    }
   }
 
   await appointment.save()
   await appointment.populate(POPULATE)
+
+  // Tell the patient their visit is done. Guarded on the transition so an
+  // admin re-saving an already-completed appointment does not resend it.
+  if (status === 'completed' && previousStatus !== 'completed') {
+    sendAppointmentEmail('completed', appointment)
+  }
 
   res.json({
     success: true,
@@ -286,6 +346,14 @@ export const getAppointmentStats = asyncHandler(async (req, res) => {
     stats: { total, upcoming, completed, cancelled, pending },
   })
 })
+
+/**
+ * Transaction reference for a settled payment, e.g. "CCPAY-4F91A2C7".
+ * A real gateway would supply this; here it is generated locally.
+ */
+function buildPaymentReference() {
+  return `CCPAY-${crypto.randomBytes(4).toString('hex').toUpperCase()}`
+}
 
 /**
  * Throws unless this user is the patient, the treating doctor, or an admin.

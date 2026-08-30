@@ -1,35 +1,72 @@
 /** @type {import('tailwindcss').Config} */
+
+/**
+ * Colours are driven by CSS variables so a single `.dark` class on <html>
+ * re-themes the whole app. Each step maps to a variable defined in index.css;
+ * in dark mode the `ink` scale is inverted (900 becomes the lightest) which
+ * flips every existing `text-ink-900` / `bg-ink-50` usage automatically.
+ */
+const inkScale = Object.fromEntries(
+  [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((step) => [
+    step,
+    `rgb(var(--ink-${step}) / <alpha-value>)`,
+  ]),
+)
+
+const brandScale = Object.fromEntries(
+  [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((step) => [
+    step,
+    `rgb(var(--brand-${step}) / <alpha-value>)`,
+  ]),
+)
+
+/**
+ * Status palettes (red/amber/emerald/sky). Tailwind's defaults are kept for
+ * every step except the ones this app uses on themed surfaces, which become
+ * variables so alert boxes and status text stay legible in dark mode.
+ */
+function statusScale(name) {
+  const variable = (step) => `rgb(var(--${name}-${step}) / <alpha-value>)`
+  return {
+    50: variable(50),
+    100: variable(100),
+    200: variable(200),
+    300: variable(300),
+    400: variable(400),
+    500: variable(500),
+    600: variable(600),
+    700: variable(700),
+    800: variable(800),
+    900: variable(900),
+  }
+}
+
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
         // ClinicCare brand — calm clinical teal
-        brand: {
-          50: '#eefbf7',
-          100: '#d5f5eb',
-          200: '#aeead9',
-          300: '#79d9c1',
-          400: '#43c0a4',
-          500: '#1fa68a',
-          600: '#12856f',
-          700: '#106b5b',
-          800: '#11554a',
-          900: '#0f473e',
+        brand: brandScale,
+        // Supporting deep navy for text/headers (inverted in dark mode)
+        ink: inkScale,
+        // Page and card surfaces — replaces bare `white` so panels re-theme.
+        surface: {
+          DEFAULT: 'rgb(var(--surface) / <alpha-value>)',
+          raised: 'rgb(var(--surface-raised) / <alpha-value>)',
+          sunken: 'rgb(var(--surface-sunken) / <alpha-value>)',
         },
-        // Supporting deep navy for text/headers
-        ink: {
-          50: '#f5f7fa',
-          100: '#e9edf3',
-          200: '#cfd8e3',
-          300: '#a8b8cb',
-          400: '#7a91ad',
-          500: '#5a7393',
-          600: '#465b79',
-          700: '#3a4a62',
-          800: '#334053',
-          900: '#1c2534',
-        },
+        /**
+         * Status colours. Only the steps the app actually uses are overridden:
+         * the -50 tint (alert backgrounds) and the -600/-700 text pairing.
+         * Defining them as variables means every existing `bg-red-50` /
+         * `text-red-700` re-themes without touching the components.
+         */
+        red: statusScale('red'),
+        amber: statusScale('amber'),
+        emerald: statusScale('emerald'),
+        sky: statusScale('sky'),
         accent: {
           50: '#fff6ed',
           100: '#ffead4',

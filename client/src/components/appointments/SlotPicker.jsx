@@ -76,7 +76,7 @@ export default function SlotPicker({
                   'flex flex-col items-center rounded-xl border px-2 py-2.5 transition',
                   isSelected
                     ? 'border-brand-600 bg-brand-600 text-white shadow-sm'
-                    : 'border-ink-200 bg-white text-ink-700 hover:border-brand-300 hover:bg-brand-50',
+                    : 'border-ink-200 bg-surface-raised text-ink-700 hover:border-brand-300 hover:bg-brand-50',
                 )}
               >
                 <span className={cn('text-[11px] font-medium', isSelected ? 'text-brand-50' : 'text-ink-500')}>
@@ -140,7 +140,7 @@ export default function SlotPicker({
                       'cursor-not-allowed border-ink-100 bg-ink-50 text-ink-300 line-through',
                     slot.available &&
                       !isSelected &&
-                      'border-ink-200 bg-white text-ink-700 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700',
+                      'border-ink-200 bg-surface-raised text-ink-700 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700',
                     isSelected && 'border-brand-600 bg-brand-600 text-white shadow-sm',
                   )}
                 >

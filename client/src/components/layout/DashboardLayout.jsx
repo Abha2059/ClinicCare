@@ -116,7 +116,7 @@ export default function DashboardLayout() {
   return (
     <div className="min-h-screen bg-ink-50/60">
       {/* Mobile top bar */}
-      <div className="sticky top-0 z-40 flex items-center justify-between border-b border-ink-100 bg-white px-4 py-3 lg:hidden">
+      <div className="sticky top-0 z-40 flex items-center justify-between border-b border-ink-100 bg-surface px-4 py-3 lg:hidden">
         <Logo />
         <button
           type="button"
@@ -131,7 +131,7 @@ export default function DashboardLayout() {
 
       <div className="mx-auto flex w-full max-w-[100rem]">
         {/* Desktop sidebar */}
-        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col border-r border-ink-100 bg-white p-5 lg:flex">
+        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col border-r border-ink-100 bg-surface p-5 lg:flex">
           <Logo />
           <div className="mt-6 flex flex-1 flex-col">{sidebarContent}</div>
         </aside>
@@ -144,7 +144,7 @@ export default function DashboardLayout() {
               onClick={() => setOpen(false)}
               aria-hidden="true"
             />
-            <aside className="absolute left-0 top-0 flex h-full w-[84%] max-w-xs flex-col bg-white p-5 shadow-pop">
+            <aside className="absolute left-0 top-0 flex h-full w-[84%] max-w-xs flex-col bg-surface p-5 shadow-pop">
               <div className="flex items-center justify-between">
                 <Logo />
                 <button

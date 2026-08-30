@@ -68,7 +68,7 @@ export function EmptyState({
         className,
       )}
     >
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-raised shadow-sm">
         <Icon className="h-6 w-6 text-ink-400" aria-hidden="true" />
       </span>
       <h3 className="text-base font-semibold text-ink-900">{title}</h3>

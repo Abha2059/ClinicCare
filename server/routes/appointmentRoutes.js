@@ -41,6 +41,10 @@ router.post(
       .isLength({ min: 5, max: 200 })
       .withMessage('Describe your reason in 5 to 200 characters'),
     body('symptoms').optional().isLength({ max: 500 }).withMessage('Symptoms must be under 500 characters'),
+    body('paymentMethod')
+      .optional()
+      .isIn(['pay-at-clinic', 'upi'])
+      .withMessage('Choose a valid payment method'),
     body('patientPhone')
       .optional({ values: 'falsy' })
       .matches(/^[0-9]{10}$/)

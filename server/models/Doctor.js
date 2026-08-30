@@ -65,6 +65,13 @@ const doctorSchema = new mongoose.Schema(
       trim: true,
       maxlength: [160, 'Qualification must be under 160 characters'],
     },
+    /** Which ClinicCare branch this doctor consults from. */
+    location: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: [120, 'Location must be under 120 characters'],
+    },
     experience: {
       type: Number,
       required: [true, 'Years of experience is required'],

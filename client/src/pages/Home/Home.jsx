@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 
 import DoctorCard from '../../components/doctors/DoctorCard'
+import ConditionCarousel from '../../components/home/ConditionCarousel'
 import SpecialtyCard from '../../components/specialties/SpecialtyCard'
 import Accordion from '../../components/common/Accordion'
 import { DoctorCardSkeleton, EmptyState, ErrorState } from '../../components/common/States'
@@ -93,9 +94,33 @@ export default function Home() {
   return (
     <>
       {/* ---------- SECTION 1 — HERO ---------- */}
-      <section className="hero-gradient border-b border-ink-100">
-        <div className="container-app grid items-center gap-10 py-14 lg:grid-cols-2 lg:gap-16 lg:py-20">
-          <div className="animate-fade-up">
+      <section className="hero-gradient hero-full relative isolate flex items-center overflow-hidden border-b border-ink-100">
+        {/* Moving backdrop. Decorative only — the scrim above it is what keeps
+            the headline legible, so the footage never carries meaning.
+            The poster image is what renders until the clip is buffered, and is
+            all that shows for anyone who has asked for reduced motion. */}
+        <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+          <video
+            className="hero-video h-full w-full object-cover object-[85%_center]"
+            poster="/hero/clinic-hero.jpg"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          >
+            <source src="/hero/clinic-hero.mp4" type="video/mp4" />
+          </video>
+          <img
+            src="/hero/clinic-hero.jpg"
+            alt=""
+            className="hero-video-fallback absolute inset-0 h-full w-full object-cover object-[85%_center]"
+          />
+          <div className="hero-scrim absolute inset-0" />
+        </div>
+
+        <div className="container-app grid w-full items-center gap-10 py-14 lg:grid-cols-2 lg:gap-16 lg:py-20">
+          <div className="hero-copy animate-fade-up">
             <span className="badge-brand">
               <HeartPulse className="h-3.5 w-3.5" aria-hidden="true" />
               Better Care. Better Health.
@@ -216,19 +241,9 @@ export default function Home() {
             right doctors.
           </p>
 
-          <ul className="mt-7 flex flex-wrap gap-2.5">
-            {POPULAR_CONDITIONS.map((c) => (
-              <li key={c.name}>
-                <Link
-                  to={`/specialties/${c.specialty}`}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-ink-200 bg-white px-4 py-2 text-sm font-medium text-ink-700 transition hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700"
-                >
-                  {c.name}
-                  <ArrowRight className="h-3.5 w-3.5 text-ink-300" aria-hidden="true" />
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-7">
+            <ConditionCarousel items={POPULAR_CONDITIONS} />
+          </div>
         </div>
       </section>
 

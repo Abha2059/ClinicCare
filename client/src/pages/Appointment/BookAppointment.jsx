@@ -4,11 +4,13 @@ import {
   ArrowLeft,
   ArrowRight,
   Briefcase,
+  Building2,
   CalendarDays,
   CheckCircle2,
   ClipboardList,
   Clock,
   MapPin,
+  Smartphone,
   Stethoscope,
   UserRound,
   Video,
@@ -20,21 +22,22 @@ import Rating from '../../components/common/Rating'
 import Breadcrumbs from '../../components/common/Breadcrumbs'
 import Stepper from '../../components/appointments/Stepper'
 import SlotPicker from '../../components/appointments/SlotPicker'
+import PaymentPanel from '../../components/appointments/PaymentPanel'
 import { ErrorState, LoadingState } from '../../components/common/States'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/AppContext'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
 import doctorService from '../../services/doctorService'
 import appointmentService from '../../services/appointmentService'
-import { APPOINTMENT_TYPES } from '../../utils/constants'
+import { APPOINTMENT_TYPES, PAYMENT_METHODS } from '../../utils/constants'
 import { formatCurrency, formatDate, formatTime, getErrorMessage, toDateKey } from '../../utils/helpers'
+import { buildAttemptReference } from '../../utils/upi'
 
 const STEPS = [
   { label: 'Doctor' },
-  { label: 'Date' },
-  { label: 'Time' },
-  { label: 'Your details' },
+  { label: 'Date & time' },
   { label: 'Reason' },
+  { label: 'Payment' },
   { label: 'Summary' },
   { label: 'Confirm' },
 ]
@@ -60,6 +63,12 @@ export default function BookAppointment() {
   const [reason, setReason] = useState('')
   const [symptoms, setSymptoms] = useState('')
   const [patientPhone, setPatientPhone] = useState(user?.phone || '')
+
+  // Payment
+  const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS.PAY_AT_CLINIC)
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false)
+  // Generated once per booking attempt so the QR does not change as the user types.
+  const [paymentReference] = useState(buildAttemptReference)
 
   const [slots, setSlots] = useState([])
   const [slotsLoading, setSlotsLoading] = useState(false)
@@ -121,30 +130,36 @@ export default function BookAppointment() {
       case 0:
         return Boolean(doctor)
       case 1:
-        return Boolean(date)
+        return Boolean(date && time)
       case 2:
-        return Boolean(time)
-      case 3:
-        return /^[0-9]{10}$/.test(patientPhone.trim())
-      case 4:
         return reason.trim().length >= 5
+      case 3:
+        // Paying at the clinic needs no confirmation; an online payment does.
+        return paymentMethod !== PAYMENT_METHODS.UPI || paymentConfirmed
       default:
         return true
     }
-  }, [step, doctor, date, time, patientPhone, reason])
+  }, [step, doctor, date, time, reason, paymentMethod, paymentConfirmed])
 
   const stepHint = useMemo(() => {
     switch (step) {
+      case 1:
+        return 'Pick a day, then select an available time slot to continue.'
       case 2:
-        return 'Select an available time slot to continue.'
-      case 3:
-        return 'Enter a valid 10-digit phone number so the clinic can reach you.'
-      case 4:
         return 'Describe your reason for the visit in at least 5 characters.'
+      case 3:
+        return 'Complete the UPI payment, then tick the confirmation to continue.'
       default:
         return ''
     }
   }, [step])
+
+  // Switching method always re-arms the confirmation, so a stale tick from a
+  // previous choice can never carry through.
+  const handlePaymentMethodChange = (value) => {
+    setPaymentMethod(value)
+    setPaymentConfirmed(false)
+  }
 
   const goNext = () => {
     if (!canContinue) return
@@ -169,6 +184,7 @@ export default function BookAppointment() {
         reason: reason.trim(),
         symptoms: symptoms.trim(),
         patientPhone: patientPhone.trim(),
+        paymentMethod,
       }
       const data = await appointmentService.create(payload)
       toast.success('Appointment booked successfully.')
@@ -182,7 +198,7 @@ export default function BookAppointment() {
         toast.error('That slot was just booked by someone else. Please choose another time.')
         await loadSlots()
         setTime('')
-        setStep(2)
+        setStep(1)
       } else {
         toast.error(message)
       }
@@ -218,6 +234,7 @@ export default function BookAppointment() {
 
   const doctorName = doctor.user?.name || 'Doctor'
   const specialtyName = doctor.specialty?.name || 'Consultation'
+  const isPayingOnline = paymentMethod === PAYMENT_METHODS.UPI
 
   return (
     <div className="container-app py-8 lg:py-10">
@@ -306,16 +323,13 @@ export default function BookAppointment() {
             </div>
           )}
 
-          {/* STEP 2 & 3 — Date and time */}
-          {(step === 1 || step === 2) && (
+          {/* STEP 2 — Date and time */}
+          {step === 1 && (
             <div>
-              <h2 className="text-lg font-semibold text-ink-900">
-                {step === 1 ? 'Choose a date' : 'Choose a time'}
-              </h2>
+              <h2 className="text-lg font-semibold text-ink-900">Choose a date &amp; time</h2>
               <p className="mt-1 text-sm text-ink-500">
-                {step === 1
-                  ? 'Pick the day you would like to visit.'
-                  : 'Only slots that are genuinely free are selectable.'}
+                Pick the day you would like to visit — only slots that are genuinely free are
+                selectable.
               </p>
 
               <div className="mt-5">
@@ -338,59 +352,8 @@ export default function BookAppointment() {
             </div>
           )}
 
-          {/* STEP 4 — Patient details */}
-          {step === 3 && (
-            <div>
-              <h2 className="text-lg font-semibold text-ink-900">Your details</h2>
-              <p className="mt-1 text-sm text-ink-500">
-                These details are shared with the clinic for this appointment.
-              </p>
-
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="patient-name" className="label">
-                    Full name
-                  </label>
-                  <input id="patient-name" value={user?.name || ''} readOnly className="input bg-ink-50" />
-                </div>
-                <div>
-                  <label htmlFor="patient-email" className="label">
-                    Email
-                  </label>
-                  <input id="patient-email" value={user?.email || ''} readOnly className="input bg-ink-50" />
-                </div>
-                <div className="sm:col-span-2">
-                  <label htmlFor="patient-phone" className="label">
-                    Contact number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="patient-phone"
-                    type="tel"
-                    inputMode="numeric"
-                    value={patientPhone}
-                    onChange={(e) => setPatientPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="10-digit mobile number"
-                    className="input"
-                    aria-describedby="phone-hint"
-                  />
-                  <p id="phone-hint" className="mt-1.5 text-xs text-ink-400">
-                    The clinic uses this number to confirm or reschedule your visit.
-                  </p>
-                </div>
-              </div>
-
-              <p className="mt-4 rounded-xl bg-ink-50 px-4 py-3 text-xs text-ink-500">
-                To change your name or email, update them in your{' '}
-                <Link to="/dashboard/profile" className="link">
-                  profile settings
-                </Link>
-                .
-              </p>
-            </div>
-          )}
-
-          {/* STEP 5 — Reason */}
-          {step === 4 && (
+          {/* STEP 3 — Reason */}
+          {step === 2 && (
             <div>
               <h2 className="text-lg font-semibold text-ink-900">Reason for your visit</h2>
               <p className="mt-1 text-sm text-ink-500">
@@ -432,14 +395,27 @@ export default function BookAppointment() {
             </div>
           )}
 
-          {/* STEP 6 & 7 — Summary / confirm */}
-          {(step === 5 || step === 6) && (
+          {/* STEP 4 — Payment */}
+          {step === 3 && (
+            <PaymentPanel
+              method={paymentMethod}
+              onMethodChange={handlePaymentMethodChange}
+              amount={doctor.consultationFee}
+              reference={paymentReference}
+              note={`Consultation with ${doctorName}`}
+              paid={paymentConfirmed}
+              onPaidChange={setPaymentConfirmed}
+            />
+          )}
+
+          {/* STEP 5 & 6 — Summary / confirm */}
+          {(step === 4 || step === 5) && (
             <div>
               <h2 className="text-lg font-semibold text-ink-900">
-                {step === 5 ? 'Review your appointment' : 'Confirm your booking'}
+                {step === 4 ? 'Review your appointment' : 'Confirm your booking'}
               </h2>
               <p className="mt-1 text-sm text-ink-500">
-                {step === 5
+                {step === 4
                   ? 'Please check every detail before confirming.'
                   : 'Submitting will reserve this slot with the doctor.'}
               </p>
@@ -504,6 +480,24 @@ export default function BookAppointment() {
                     )}
                   </dd>
                 </div>
+                <div className="flex items-start justify-between gap-4 p-4">
+                  <dt className="inline-flex items-center gap-2 text-sm text-ink-500">
+                    {isPayingOnline ? (
+                      <Smartphone className="h-4 w-4" aria-hidden="true" />
+                    ) : (
+                      <Building2 className="h-4 w-4" aria-hidden="true" />
+                    )}
+                    Payment
+                  </dt>
+                  <dd className="text-right text-sm font-medium text-ink-900">
+                    {isPayingOnline ? 'Paid online via UPI' : 'Pay at the clinic'}
+                    {isPayingOnline && (
+                      <span className="mt-0.5 block font-mono text-xs font-normal text-ink-500">
+                        {paymentReference}
+                      </span>
+                    )}
+                  </dd>
+                </div>
                 <div className="flex items-start justify-between gap-4 bg-brand-50/60 p-4">
                   <dt className="inline-flex items-center gap-2 text-sm font-medium text-ink-700">
                     <Wallet className="h-4 w-4" aria-hidden="true" />
@@ -511,14 +505,22 @@ export default function BookAppointment() {
                   </dt>
                   <dd className="text-right text-base font-bold text-ink-900">
                     {formatCurrency(doctor.consultationFee)}
+                    <span className="mt-0.5 block text-xs font-medium text-emerald-700">
+                      {isPayingOnline ? 'Paid' : 'Due at the clinic'}
+                    </span>
                   </dd>
                 </div>
               </dl>
 
-              {step === 6 && (
-                <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                  Payment is made directly at the clinic. Your slot is held once this booking is
-                  confirmed.
+              {step === 5 && (
+                <p
+                  className={`mt-4 rounded-xl px-4 py-3 text-sm ${
+                    isPayingOnline ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800'
+                  }`}
+                >
+                  {isPayingOnline
+                    ? `Your payment of ${formatCurrency(doctor.consultationFee)} is recorded against reference ${paymentReference}. Your slot is held once this booking is confirmed.`
+                    : 'Payment is made directly at the clinic. Your slot is held once this booking is confirmed.'}
                 </p>
               )}
 
@@ -596,11 +598,16 @@ export default function BookAppointment() {
               </div>
             </dl>
 
-            <div className="mt-4 flex items-center justify-between border-t border-ink-100 pt-4">
-              <span className="text-sm text-ink-500">Fee</span>
-              <span className="text-lg font-bold text-ink-900">
-                {formatCurrency(doctor.consultationFee)}
-              </span>
+            <div className="mt-4 border-t border-ink-100 pt-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-ink-500">Fee</span>
+                <span className="text-lg font-bold text-ink-900">
+                  {formatCurrency(doctor.consultationFee)}
+                </span>
+              </div>
+              <p className="mt-1 text-right text-xs text-ink-500">
+                {isPayingOnline ? 'Paying online via UPI' : 'Payable at the clinic'}
+              </p>
             </div>
           </div>
         </aside>

@@ -24,7 +24,7 @@ export default function DoctorCard({ doctor }) {
 
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="truncate text-base font-semibold text-ink-900">
+              <h3 className="text-base font-semibold leading-snug text-ink-900">
                 <Link
                   to={`/doctors/${doctor._id}`}
                   className="transition hover:text-brand-700 focus-visible:text-brand-700"
@@ -43,7 +43,7 @@ export default function DoctorCard({ doctor }) {
               )}
             </div>
 
-            <p className="mt-0.5 truncate text-sm font-medium text-brand-700">{specialtyName}</p>
+            <p className="mt-0.5 text-sm font-medium leading-snug text-brand-700">{specialtyName}</p>
 
             <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-500">
               {doctor.qualification && (
