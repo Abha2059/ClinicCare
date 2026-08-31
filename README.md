@@ -269,7 +269,7 @@ Run from the project root:
 
 ## Demo accounts
 
-All demo accounts use the password **`Password123`**.
+All demo accounts .
 
 | Role    | Email                     |
 | ------- | ------------------------- |
